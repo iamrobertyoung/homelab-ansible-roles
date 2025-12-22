@@ -1,3 +1,4 @@
+---
 user: noxious
 home_directory: "/home/{{ user }}"
 show_pretty_info: true

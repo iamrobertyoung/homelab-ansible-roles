@@ -1,3 +1,4 @@
+---
 - name: Add step-ca repo
   become: true
   ansible.builtin.deb822_repository:

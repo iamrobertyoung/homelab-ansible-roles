@@ -86,7 +86,9 @@
 #     content: "{{ docker_config_content }}"
 #     mode: "0644"
 #   vars:
-#     existing_config: "{{ docker_daemon_content.content | b64decode | from_json if (docker_installed.stat.exists and docker_daemon_json.stat.exists) else {} }}"
+#     existing_config: >-
+#       {{ docker_daemon_content.content | b64decode | from_json
+#       if (docker_installed.stat.exists and docker_daemon_json.stat.exists) else {} }}
 #     log_config:
 #       {
 #         "log-driver": "json-file",
