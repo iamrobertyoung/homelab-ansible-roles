@@ -1,0 +1,9 @@
+---
+profile: production
+
+exclude_paths:
+  - .github/
+  - .git/
+
+skip_list:
+  - name[casing]
