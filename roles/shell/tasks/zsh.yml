@@ -1,0 +1,49 @@
+---
+- name: Install zsh
+  become: true
+  apt:
+    name: ["zsh", "figlet", "hyfetch"]
+    state: present
+    update_cache: yes
+
+- name: Change shell
+  become: true
+  # become_user: "{{ user }}"
+  ansible.builtin.user:
+    name: "{{ user }}"
+    shell: "/usr/bin/zsh"
+
+- name: Check ohmyzsh directory {{ user }} {{ ohmyzsh_directory }}
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.stat:
+    path: "{{ ohmyzsh_directory }}"
+  register: ohmyzsh_directory_result
+
+- name: Git checkout oh-my-zsh
+  become: true
+  become_user: "{{ user }}"
+  ansible.builtin.git:
+    repo: "https://github.com/ohmyzsh/ohmyzsh"
+    dest: "{{ ohmyzsh_directory }}"
+    version: master
+    depth: 1
+  when: not ohmyzsh_directory_result.stat.exists
+
+- name: Create .zshrc
+  become: true
+  become_user: "{{ user }}"
+  template:
+    src: "templates/.zshrc.j2"
+    dest: "{{ home_directory }}/.zshrc"
+    owner: "{{ user }}"
+    mode: "0644"
+
+- name: Create zsh theme
+  become: true
+  become_user: "{{ user }}"
+  copy:
+    src: "files/codespaces.zsh-theme"
+    dest: "{{ home_directory }}/.oh-my-zsh/custom/themes/codespaces.zsh-theme"
+    owner: "{{ user }}"
+    mode: "0644"

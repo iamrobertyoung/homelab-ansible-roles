@@ -1,0 +1,16 @@
+---
+- name: Install vim
+  become: true
+  apt:
+    name: ["vim"]
+    state: present
+    update_cache: yes
+
+- name: Copy vim configuration file
+  become: true
+  ansible.builtin.copy:
+    src: "files/vimrc"
+    dest: "{{ home_directory }}/.vimrc"
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: "0644"

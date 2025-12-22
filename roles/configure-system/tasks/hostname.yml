@@ -1,0 +1,23 @@
+- name: Set hostname using hostname module
+  become: true
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"
+
+- name: Ensure /etc/hostname is configured
+  become: true
+  ansible.builtin.copy:
+    content: "{{ hostname }}\n"
+    dest: /etc/hostname
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure /etc/hosts is configured
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1\s+'
+    line: "127.0.1.1 {{ hostname }}"
+    owner: root
+    group: root
+    mode: "0644"

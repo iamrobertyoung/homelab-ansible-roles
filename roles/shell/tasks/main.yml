@@ -1,0 +1,11 @@
+---
+- name: zsh
+  import_tasks: zsh.yml
+  tags:
+    - zsh
+
+- name: vim
+  import_tasks: vim.yml
+  tags:
+    - vim
+  

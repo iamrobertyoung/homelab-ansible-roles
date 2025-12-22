@@ -1,0 +1,10 @@
+---
+# hostname: default
+
+# Log rotation and journal settings
+log_retention_days: 30
+journal_retention_days: 30
+logrotate_rotate_count: 10
+docker_log_max_size: "100m"
+docker_log_max_file: "3"
+tmp_cleanup_days: 30

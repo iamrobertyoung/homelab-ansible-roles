@@ -1,0 +1,113 @@
+---
+# Systemd Journal Configuration
+- name: Configure systemd journal retention
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: "^#?MaxRetentionSec="
+    line: "MaxRetentionSec={{ journal_retention_days }}day"
+    state: present
+  notify: restart systemd-journald
+
+- name: Vacuum systemd journal logs
+  become: true
+  ansible.builtin.command:
+    cmd: journalctl --vacuum-time={{ journal_retention_days }}d
+  changed_when: true
+
+# Logrotate Configuration
+- name: Ensure logrotate is installed
+  become: true
+  ansible.builtin.apt:
+    name: logrotate
+    state: present
+
+# - name: Create custom logrotate configuration
+#   become: true
+#   ansible.builtin.copy:
+#     dest: /etc/logrotate.d/custom
+#     content: |
+#       /var/log/*.log
+#       /var/log/*/*.log
+#       /var/log/*/*/*.log
+#       {
+#         rotate {{ logrotate_rotate_count }}
+#         maxage {{ log_retention_days }}
+#         daily
+#         missingok
+#         notifempty
+#         compress
+#         delaycompress
+#         copytruncate
+#         dateext
+#         create 0640 root adm
+#       }
+#     mode: "0644"
+
+- name: Force logrotate run
+  become: true
+  ansible.builtin.command:
+    cmd: logrotate -f /etc/logrotate.conf
+  changed_when: true
+
+# Clean up old Docker logs
+# - name: Check if Docker is installed
+#   become: true
+#   ansible.builtin.stat:
+#     path: /usr/bin/docker
+#   register: docker_installed
+
+# - name: Ensure Docker config directory exists
+#   become: true
+#   ansible.builtin.file:
+#     path: /etc/docker
+#     state: directory
+#     mode: "0755"
+#   when: docker_installed.stat.exists
+
+# - name: Check if Docker daemon.json exists
+#   become: true
+#   ansible.builtin.stat:
+#     path: /etc/docker/daemon.json
+#   register: docker_daemon_json
+#   when: docker_installed.stat.exists
+
+# - name: Read existing Docker daemon.json if it exists
+#   become: true
+#   ansible.builtin.slurp:
+#     src: /etc/docker/daemon.json
+#   register: docker_daemon_content
+#   when: docker_installed.stat.exists and docker_daemon_json.stat.exists
+
+# - name: Set Docker log rotation (if Docker is installed)
+#   become: true
+#   ansible.builtin.copy:
+#     dest: /etc/docker/daemon.json
+#     content: "{{ docker_config_content }}"
+#     mode: "0644"
+#   vars:
+#     existing_config: "{{ docker_daemon_content.content | b64decode | from_json if (docker_installed.stat.exists and docker_daemon_json.stat.exists) else {} }}"
+#     log_config:
+#       {
+#         "log-driver": "json-file",
+#         "log-opts":
+#           {
+#             "max-size": "{{ docker_log_max_size }}",
+#             "max-file": "{{ docker_log_max_file | string }}",
+#           },
+#       }
+#     docker_config_content: "{{ (existing_config | combine(log_config, recursive=True)) | to_nice_json }}"
+#   register: docker_config
+#   when: docker_installed.stat.exists
+#   notify: restart docker
+#   ignore_errors: true
+
+# Clean up /tmp directory
+- name: Clean up files in /tmp older than specified days
+  become: true
+  ansible.builtin.cron:
+    name: "Clean tmp files"
+    hour: "2"
+    minute: "30"
+    job: "find /tmp -type f -mtime +{{ tmp_cleanup_days }} -delete"
+    state: present
