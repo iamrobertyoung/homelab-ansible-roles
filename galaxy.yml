@@ -1,0 +1,14 @@
+---
+namespace: robertyoung
+name: homelab
+version: 1.1.1
+readme: README.md
+authors:
+  - Robert Young
+description: Homelab Ansible roles collection
+license_file: LICENSE
+tags:
+  - homelab
+  - infrastructure
+dependencies: {}
+repository: https://github.com/RobertYoung/homelab-ansible-roles
