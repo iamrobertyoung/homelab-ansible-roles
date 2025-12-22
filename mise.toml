@@ -1,2 +1,3 @@
 [tools]
-pipx = "latest"
+ansible = "13"
+pipx = "1.8"
