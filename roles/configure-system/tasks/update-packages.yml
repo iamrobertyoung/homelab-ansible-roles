@@ -1,3 +1,4 @@
+---
 - name: Update apt-get repo and cache
   become: true
   ansible.builtin.apt:
@@ -22,4 +23,4 @@
     reboot_timeout: 300
     pre_reboot_delay: 0
     post_reboot_delay: 30
-  when: reboot_required.stat.exists #and ha_reboot_after_update
+  when: reboot_required.stat.exists  # and ha_reboot_after_update

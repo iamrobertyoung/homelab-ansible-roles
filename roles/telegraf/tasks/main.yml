@@ -1,3 +1,4 @@
+---
 - name: Add influxdata repo
   become: true
   ansible.builtin.deb822_repository:
@@ -5,9 +6,9 @@
     types: [deb]
     uris: "https://repos.influxdata.com/debian"
     suites:
-      [
-        "{{ 'bookworm' if ansible_facts['distribution_release'] == 'trixie' else ansible_facts['distribution_release'] }}",
-      ]
+      - >-
+        {{ 'bookworm' if ansible_facts['distribution_release'] == 'trixie'
+        else ansible_facts['distribution_release'] }}
     components: [main]
     signed_by: https://repos.influxdata.com/influxdata-archive.key
     state: present
