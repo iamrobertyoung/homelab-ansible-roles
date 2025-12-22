@@ -1,0 +1,5 @@
+user: noxious
+home_directory: "/home/{{ user }}"
+show_pretty_info: true
+ohmyzsh_directory: "{{ home_directory }}/.oh-my-zsh"
+# hostname: "home-server"
