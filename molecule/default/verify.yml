@@ -1,0 +1,33 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Assert packages are installed
+      ansible.builtin.assert:
+        that:
+          - "'zsh' in ansible_facts.packages"
+          - "'vim' in ansible_facts.packages"
+          - "'rsyslog' in ansible_facts.packages"
+
+    - name: Stat managed files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /root/.zshrc
+        - /root/.vimrc
+        - /root/.oh-my-zsh/custom/themes/codespaces.zsh-theme
+        - /etc/rsyslog.d/01-graylog.conf
+      register: managed_files
+
+    - name: Assert managed files exist
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "{{ item.item }} is missing"
+      loop: "{{ managed_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"

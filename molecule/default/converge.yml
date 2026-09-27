@@ -1,0 +1,12 @@
+---
+# Roles needing a live CA, a reboot or a Docker daemon in the container are left out.
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    user: root
+    home_directory: /root
+    hostname: test-host
+  roles:
+    - role: shell
+    - role: syslog
