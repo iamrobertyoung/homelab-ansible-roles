@@ -1,0 +1,10 @@
+---
+# Real hosts get git from configure_system, which is not converged here.
+- name: Prepare
+  hosts: all
+  become: true
+  tasks:
+    - name: Install git
+      ansible.builtin.apt:
+        name: git
+        update_cache: true

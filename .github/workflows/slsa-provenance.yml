@@ -1,0 +1,122 @@
+name: SLSA Provenance
+
+# Generate SLSA Level 3 provenance for release artifacts
+# See: https://slsa.dev/ and https://github.com/slsa-framework/slsa-github-generator
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to generate provenance for"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  # Build the Ansible collection tarball and generate hash
+  build:
+    name: Build Release Artifact
+    runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+      tag: ${{ steps.tag.outputs.tag }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - name: Determine tag
+        id: tag
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Using tag: ${TAG}"
+
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: "3.11"
+
+      - name: Build Ansible collection tarball
+        run: |
+          pip install ansible-core
+          # galaxy.yml is not bumped by semantic-release, so stamp the release version from the tag
+          sed -i "s/^version: .*/version: ${TAG#v}/" galaxy.yml
+          ansible-galaxy collection build
+          ls -la "robertyoung-homelab-${TAG#v}.tar.gz"
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+
+      - name: Generate artifact hash
+        id: hash
+        run: |
+          # Generate SHA256 hash in the format expected by SLSA generator
+          HASH=$(sha256sum "robertyoung-homelab-${TAG#v}.tar.gz" | base64 -w0)
+          echo "hashes=${HASH}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: artifact
+          path: robertyoung-homelab-*.tar.gz
+          retention-days: 5
+          if-no-files-found: error
+
+  # Generate SLSA provenance using the official generator
+  provenance:
+    name: Generate SLSA Provenance
+    needs: [build]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      upload-assets: true
+      upload-tag-name: ${{ needs.build.outputs.tag }}
+
+  # Upload the release artifact to GitHub release and submit attestation
+  release:
+    name: Upload Release Artifact
+    needs: [build, provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
+        with:
+          egress-policy: audit
+
+      - name: Download artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: artifact
+
+      - name: Upload artifact to release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          tag_name: ${{ needs.build.outputs.tag }}
+          files: robertyoung-homelab-*.tar.gz
+
+      - name: Submit attestation to GitHub
+        uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
+        with:
+          subject-path: robertyoung-homelab-*.tar.gz
