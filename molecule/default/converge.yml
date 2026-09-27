@@ -7,6 +7,7 @@
     user: root
     home_directory: /root
     hostname: test-host
+    fqdn: test-host.example.com
   roles:
     - role: shell
     - role: syslog
