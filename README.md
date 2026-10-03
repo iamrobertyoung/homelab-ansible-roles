@@ -21,7 +21,7 @@ roles/
 Include roles via `requirements.yml`:
 
 ```yaml
-- src: git@github.com:RobertYoung/homelab-ansible-roles.git
+- src: git@github.com:iamrobertyoung/homelab-ansible-roles.git
   scm: git
   version: main
 ```
