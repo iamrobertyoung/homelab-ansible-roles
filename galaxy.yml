@@ -11,4 +11,4 @@ tags:
   - homelab
   - infrastructure
 dependencies: {}
-repository: https://github.com/RobertYoung/homelab-ansible-roles
+repository: https://github.com/iamrobertyoung/homelab-ansible-roles
